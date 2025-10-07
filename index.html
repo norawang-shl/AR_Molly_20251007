@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A-Frame AR 產品配置器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A-Frame 1.3.0 -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <!-- AR.js for markerless AR -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #ui { position: absolute; top: 10px; left: 10px; z-index: 10; }
+    #ui button { margin: 5px; padding: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <!-- UI 按鈕 -->
+  <div id="ui">
+    <button onclick="changeTexture('textures/texture1.jpg')">貼圖 1</button>
+    <button onclick="changeTexture('textures/texture2.jpg')">貼圖 2</button>
+    <button onclick="changeTexture('textures/texture3.jpg')">貼圖 3</button>
+  </div>
+
+  <!-- A-Frame Scene -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+
+    <!-- 3D 模型 -->
+    <a-entity id="product" 
+              gltf-model="./model/Molly1006.glb" 
+              scale="0.5 0.5 0.5"
+              rotation="0 0 0"
+              position="0 0 0">
+    </a-entity>
+
+    <!-- 環境光 & 方向光 -->
+    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
+
+  </a-scene>
+
+  <script>
+    const product = document.getElementById('product');
+
+    function changeTexture(texturePath) {
+      // 等模型載入完成
+      if (!product.getObject3D('mesh')) {
+        product.addEventListener('model-loaded', () => {
+          applyTexture(texturePath);
+        });
+      } else {
+        applyTexture(texturePath);
+      }
+    }
+
+    function applyTexture(texturePath) {
+      const mesh = product.getObject3D('mesh');
+      if (!mesh) return;
+
+      mesh.traverse((node) => {
+        if (node.isMesh) {
+          const texture = new THREE.TextureLoader().load(texturePath);
+          node.material.map = texture;
+          node.material.needsUpdate = true;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
