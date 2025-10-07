@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>A-Frame AR 產品配置器 (不 zoom in)</title>
+  <title>A-Frame AR 產品配置器 (原始鏡頭焦距)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- A-Frame 1.3.0 -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -19,13 +19,15 @@
   <!-- UI 按鈕 -->
   <div id="ui">
     <button onclick="changeTexture('textures/tex1.jpg')">貼圖 1</button>
-    <button onclick="changeTexture('textures/tex2.jpg')">貼圖 2</button>
-    <button onclick="changeTexture('textures/tex3.jpg')">貼圖 3</button>
+    <button onclick="changeTexture('textures/text2.jpg')">貼圖 2</button>
+    <button onclick="changeTexture('textures/text3.jpg')">貼圖 3</button>
   </div>
 
   <!-- A-Frame Scene -->
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-    
+  <a-scene embedded
+           vr-mode-ui="enabled: false"
+           arjs="trackingMethod: best; sourceType: webcam; autoScale: false; debugUIEnabled: false;">
+
     <!-- 環境光 & 方向光 -->
     <a-entity light="type: ambient; intensity: 0.7"></a-entity>
     <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
@@ -33,8 +35,8 @@
     <!-- 3D 模型 -->
     <a-entity id="product" 
               gltf-model="./model/Molly1006.glb" 
-              scale="0.8 0.8 0.8"      <!-- 適中大小 -->
-              position="0 0 0"          <!-- 不拉近鏡頭 -->
+              scale="1 1 1"           <!-- 原始大小 -->
+              position="0 0 0"        <!-- 不拉近鏡頭 -->
               rotation="0 0 0"
               gesture-handler>
     </a-entity>
