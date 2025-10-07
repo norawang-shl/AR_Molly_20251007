@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Molly AR Material Switch - New Lights</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>
+    button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      margin: 2px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam;" renderer="colorManagement: true">
+
+    <!-- 模型 -->
+    <a-entity id="molly" gltf-model="#mollyModel" position="0 0 -2" scale="0.5 0.5 0.5"></a-entity>
+
+    <!-- 新光源 -->
+    <a-entity light="type: directional; color: #ffffff; intensity: 1" position="1 2 3"></a-entity>
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.5"></a-entity>
+
+    <!-- 攝影機 -->
+    <a-camera></a-camera>
+
+    <!-- 資源 -->
+    <a-assets>
+      <a-asset-item id="mollyModel" src="model/Molly1006.glb"></a-asset-item>
+      <img id="red" src="textures/tex1.jpg">
+      <img id="blue" src="textures/tex2.jpg">
+      <img id="green" src="textures/tex3.jpg">
+    </a-assets>
+
+  </a-scene>
+
+  <!-- 按鈕切換 Label 材質 -->
+  <button onclick="changeLabelMaterial('red')">紅色</button>
+  <button onclick="changeLabelMaterial('blue')">藍色</button>
+  <button onclick="changeLabelMaterial('green')">綠色</button>
+
+  <script src="changeMaterial.js"></script>
+</body>
+</html>
