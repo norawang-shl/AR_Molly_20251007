@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Molly 3D Model Configurator</title>
+  <title>Molly 3D Model AR Configurator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- A-Frame 1.3.0 -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <!-- AR.js for A-Frame -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+
   <style>
     body { margin: 0; overflow: hidden; }
     #ui { position: absolute; top: 10px; left: 10px; z-index: 10; }
@@ -15,39 +20,48 @@
 
   <!-- UI 按鈕 -->
   <div id="ui">
-    <button onclick="changeLabelTexture('textures/tex1.jpg')">Label 1</button>
-    <button onclick="changeLabelTexture('textures/tex2.jpg')">Label 2</button>
-    <button onclick="changeLabelTexture('textures/tex3.jpg')">Label 3</button>
+    <button onclick="changeLabelTexture('textures/label1.jpg')">Label 1</button>
+    <button onclick="changeLabelTexture('textures/label2.jpg')">Label 2</button>
+    <button onclick="changeLabelTexture('textures/label3.jpg')">Label 3</button>
     <br>
     <button onclick="rotateModel(45)">旋轉 45°</button>
     <button onclick="rotateModel(-45)">旋轉 -45°</button>
   </div>
 
-  <a-scene background="color: #ECECEC">
+  <a-scene embedded
+           vr-mode-ui="enabled: false"
+           arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; autoScale: true;"
+           background="color: #ECECEC">
 
     <a-assets>
       <a-asset-item id="molly" src="./model/Molly1006.glb"></a-asset-item>
     </a-assets>
 
-    <!-- 3D 模型 -->
-    <a-entity id="product"
-              gltf-model="#molly"
-              scale="1 1 1"
-              position="0 0 0"
-              rotation="0 45 0"
-              gesture-handler>
-    </a-entity>
+    <!-- Marker-based AR -->
+    <a-marker preset="hiro">
 
-    <!-- 環境光 & 方向光 -->
-    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
-    <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
+      <!-- 容器：旋轉中心 -->
+      <a-entity id="container" position="0 0 0">
 
-    <!-- 相機 -->
-    <a-entity camera look-controls position="0 1.6 4"></a-entity>
+        <!-- 3D 模型 -->
+        <a-entity id="product"
+                  gltf-model="#molly"
+                  scale="1 1 1"
+                  position="0 0 0"
+                  rotation="0 0 0"
+                  gesture-handler>
+        </a-entity>
+
+      </a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
 
   </a-scene>
 
   <script>
+    const container = document.getElementById('container');
     const product = document.getElementById('product');
 
     // 只換 Label 材質
@@ -74,36 +88,36 @@
       });
     }
 
-    // 模型旋轉按鈕
+    // 按鈕旋轉：以 container 為中心
     function rotateModel(degrees) {
-      const currentRotation = product.getAttribute('rotation');
-      product.setAttribute('rotation', {
+      const currentRotation = container.getAttribute('rotation');
+      container.setAttribute('rotation', {
         x: currentRotation.x,
         y: currentRotation.y + degrees,
         z: currentRotation.z
       });
     }
 
-    // 手勢旋轉 + 縮放
+    // 手勢旋轉 + 縮放（以 container 為中心）
     AFRAME.registerComponent('gesture-handler', {
       init: function () {
         this.lastScale = null;
 
         // 一指旋轉
         this.el.sceneEl.addEventListener('onefingerstart', e => {
-          this.lastRotation = Object.assign({}, this.el.object3D.rotation);
+          this.lastRotation = Object.assign({}, container.object3D.rotation);
         });
 
         this.el.sceneEl.addEventListener('onefingermove', e => {
-          this.el.object3D.rotation.y = this.lastRotation.y - e.detail.positionChange.x * 0.01;
-          this.el.object3D.rotation.x = this.lastRotation.x - e.detail.positionChange.y * 0.01;
+          container.object3D.rotation.y = this.lastRotation.y - e.detail.positionChange.x * 0.01;
+          container.object3D.rotation.x = this.lastRotation.x - e.detail.positionChange.y * 0.01;
         });
 
         // 兩指縮放
         this.el.sceneEl.addEventListener('twofingermove', e => {
-          if (!this.lastScale) this.lastScale = this.el.getAttribute('scale');
+          if (!this.lastScale) this.lastScale = container.getAttribute('scale');
           const newScale = this.lastScale.x * e.detail.spreadChange;
-          this.el.setAttribute('scale', { x: newScale, y: newScale, z: newScale });
+          container.setAttribute('scale', { x: newScale, y: newScale, z: newScale });
         });
 
         this.el.sceneEl.addEventListener('twofingerend', e => {
