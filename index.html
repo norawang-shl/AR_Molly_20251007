@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+    <head>
+        <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+        <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+        <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+        <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-detector.js"></script>
+        <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-handler.js"></script>
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+                font-family: Arial, sans-serif;
+            }
+            
+            #ui-panel {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                padding: 20px;
+                border-radius: 15px;
+                z-index: 1000;
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 90%;
+            }
+            
+            .texture-btn {
+                width: 70px;
+                height: 70px;
+                border: 3px solid white;
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.3s;
+                background-size: cover;
+                background-position: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 10px;
+                text-align: center;
+                padding: 5px;
+            }
+            
+            .texture-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+            
+            .texture-btn.active {
+                border-color: #00ff00;
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            }
+            
+            #info {
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                z-index: 1000;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <div>👆 點擊下方按鈕更換模型材質</div>
+        </div>
+
+        <div id="ui-panel">
+            <button class="texture-btn active" data-color="#8B4513" data-metalness="0" data-roughness="0.8">
+                木頭
+            </button>
+            <button class="texture-btn" data-color="#C0C0C0" data-metalness="0.9" data-roughness="0.2">
+                金屬
+            </button>
+            <button class="texture-btn" data-color="#708090" data-metalness="0" data-roughness="0.9">
+                石頭
+            </button>
+            <button class="texture-btn" data-color="#1E90FF" data-metalness="0.1" data-roughness="0.3">
+                塑膠
+            </button>
+            <button class="texture-btn" data-color="#FFD700" data-metalness="0.8" data-roughness="0.3">
+                黃金
+            </button>
+            <button class="texture-btn" data-color="#2F4F4F" data-metalness="0" data-roughness="0.7">
+                皮革
+            </button>
+        </div>
+
+        <a-scene
+            vr-mode-ui="enabled: false;"
+            loading-screen="enabled: false;"
+            renderer="logarithmicDepthBuffer: true;"
+            arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+            id="scene"
+            embedded
+            gesture-detector
+        >
+            <a-assets>
+                <a-asset-item
+                    id="animated-asset"
+                    src="assets/asset.glb"
+                ></a-asset-item>
+            </a-assets>
+            <a-marker
+                id="animated-marker"
+                type="pattern"
+                preset="custom"
+                url="assets/marker.patt"
+                raycaster="objects: .clickable"
+                emitevents="true"
+                cursor="fuse: false; rayOrigin: mouse;"
+            >
+                <a-entity
+                    id="bowser-model"
+                    scale="0.10319673832591876 0.10319673832591876 0.10319673832591876"
+                    animation-mixer="loop: repeat"
+                    gltf-model="#animated-asset"
+                    class="clickable"
+                    gesture-handler
+                ></a-entity>
+            </a-marker>
+            <a-entity camera></a-entity>
+        </a-scene>
+
+        <script>
+            const buttons = document.querySelectorAll('.texture-btn');
+            let modelLoaded = false;
+            
+            // 嘗試多種方式監聽模型載入
+            function setupMaterialChange() {
+                const model = document.querySelector('#bowser-model');
+                console.log('設置材質切換功能');
+                
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const color = btn.dataset.color;
+                        const metalness = parseFloat(btn.dataset.metalness);
+                        const roughness = parseFloat(btn.dataset.roughness);
+                        
+                        console.log('點擊按鈕:', color, metalness, roughness);
+                        
+                        // 更新按鈕狀態
+                        buttons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        // 嘗試多種方式取得模型
+                        const object3D = model.getObject3D('mesh');
+                        console.log('Object3D:', object3D);
+                        
+                        if (object3D) {
+                            let meshCount = 0;
+                            object3D.traverse((node) => {
+                                if (node.isMesh) {
+                                    meshCount++;
+                                    console.log('找到 mesh:', node.name);
+                                    
+                                    if (node.material) {
+                                        // 處理單一材質
+                                        if (!Array.isArray(node.material)) {
+                                            node.material.color.set(color);
+                                            node.material.metalness = metalness;
+                                            node.material.roughness = roughness;
+                                            node.material.needsUpdate = true;
+                                        } else {
+                                            // 處理材質陣列
+                                            node.material.forEach(mat => {
+                                                mat.color.set(color);
+                                                mat.metalness = metalness;
+                                                mat.roughness = roughness;
+                                                mat.needsUpdate = true;
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                            console.log('更新了', meshCount, '個 mesh');
+                        } else {
+                            console.log('無法取得 Object3D，模型可能尚未載入');
+                        }
+                    });
+                });
+            }
+            
+            // 方法 1: 監聽場景載入
+            document.querySelector('#scene').addEventListener('loaded', () => {
+                console.log('場景已載入');
+                setTimeout(setupMaterialChange, 1000);
+            });
+            
+            // 方法 2: 監聽模型載入
+            const model = document.querySelector('#bowser-model');
+            model.addEventListener('model-loaded', () => {
+                console.log('模型已載入 (model-loaded)');
+                modelLoaded = true;
+                setupMaterialChange();
+            });
+            
+            // 方法 3: 延遲執行（備用）
+            setTimeout(() => {
+                if (!modelLoaded) {
+                    console.log('使用延遲載入方式');
+                    setupMaterialChange();
+                }
+            }, 3000);
+        </script>
+    </body>
+</html>
