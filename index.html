@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- A-Frame 1.3.0 -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-  <!-- AR.js for markerless AR -->
+  <!-- AR.js -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
@@ -15,6 +15,7 @@
   </style>
 </head>
 <body>
+
   <!-- UI 按鈕 -->
   <div id="ui">
     <button onclick="changeTexture('textures/texture1.jpg')">貼圖 1</button>
@@ -24,30 +25,29 @@
 
   <!-- A-Frame Scene -->
   <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-
-    <!-- 3D 模型 -->
-    <a-entity id="product" 
-              gltf-model="./model/Molly1006.glb" 
-              scale="0.5 0.5 0.5"
-              rotation="0 0 0"
-              position="0 0 0">
-    </a-entity>
-
+    
     <!-- 環境光 & 方向光 -->
     <a-entity light="type: ambient; intensity: 0.7"></a-entity>
     <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
+
+    <!-- 3D 模型 -->
+    <a-entity id="product" 
+              gltf-model="./model/product.glb" 
+              scale="1.2 1.2 1.2"   <!-- 初始放大，鏡頭更近 -->
+              position="0 0 -0.5"   <!-- 拉近鏡頭 -->
+              rotation="0 0 0"
+              gesture-handler>
+    </a-entity>
 
   </a-scene>
 
   <script>
     const product = document.getElementById('product');
 
+    // 切換貼圖
     function changeTexture(texturePath) {
-      // 等模型載入完成
       if (!product.getObject3D('mesh')) {
-        product.addEventListener('model-loaded', () => {
-          applyTexture(texturePath);
-        });
+        product.addEventListener('model-loaded', () => applyTexture(texturePath));
       } else {
         applyTexture(texturePath);
       }
@@ -65,6 +65,34 @@
         }
       });
     }
+
+    // 註冊手勢操作（旋轉 + 縮放）
+    AFRAME.registerComponent('gesture-handler', {
+      init: function () {
+        this.lastScale = null;
+
+        this.el.sceneEl.addEventListener('onefingerstart', e => {
+          this.lastRotation = Object.assign({}, this.el.object3D.rotation);
+        });
+
+        this.el.sceneEl.addEventListener('onefingermove', e => {
+          // 簡單旋轉
+          this.el.object3D.rotation.y = this.lastRotation.y - e.detail.positionChange.x * 0.01;
+          this.el.object3D.rotation.x = this.lastRotation.x - e.detail.positionChange.y * 0.01;
+        });
+
+        this.el.sceneEl.addEventListener('twofingermove', e => {
+          if (!this.lastScale) this.lastScale = this.el.getAttribute('scale');
+          const newScale = this.lastScale.x * e.detail.spreadChange;
+          this.el.setAttribute('scale', { x: newScale, y: newScale, z: newScale });
+        });
+
+        this.el.sceneEl.addEventListener('twofingerend', e => {
+          this.lastScale = null;
+        });
+      }
+    });
   </script>
+
 </body>
 </html>
