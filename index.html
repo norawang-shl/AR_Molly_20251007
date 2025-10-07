@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A-Frame AR 產品配置器 (點擊放置)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A-Frame 1.3.0 -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <!-- AR.js -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #ui { position: absolute; top: 10px; left: 10px; z-index: 10; }
+    #ui button { margin: 5px; padding: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- UI 按鈕 -->
+  <div id="ui">
+    <button onclick="changeTexture('textures/tex1.jpg')">貼圖 1</button>
+    <button onclick="changeTexture('textures/tex2.jpg')">貼圖 2</button>
+    <button onclick="changeTexture('textures/tex3.jpg')">貼圖 3</button>
+  </div>
+
+  <!-- A-Frame Scene -->
+  <a-scene embedded
+           vr-mode-ui="enabled: false"
+           arjs="trackingMethod: best; sourceType: webcam; autoScale: false; debugUIEnabled: false;">
+
+    <!-- 環境光 & 方向光 -->
+    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
+
+    <!-- 3D 模型（初始隱藏） -->
+    <a-entity id="product" 
+              gltf-model="./model/Molly1006.glb" 
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              rotation="0 0 0"
+              gesture-handler>
+    </a-entity>
+
+    <!-- 相機 -->
+    <a-entity camera look-controls></a-entity>
+
+  </a-scene>
+
+  <script>
+    const sceneEl = document.querySelector('a-scene');
+    const product = document.getElementById('product');
+
+    // 點擊螢幕放置模型
+    sceneEl.addEventListener('click', function () {
+      const camera = document.querySelector('[camera]');
+      const camPos = new THREE.Vector3();
+      const camDir = new THREE.Vector3();
+
+      camera.object3D.getWorldPosition(camPos);
+      camera.object3D.getWorldDirection(camDir);
+
+      // 放置距離 camera 前方 1.5 米
+      const placePos = {
+        x: camPos.x + camDir.x * 1.5,
+        y: camPos.y + camDir.y * 1.5,
+        z: camPos.z + camDir.z * 1.5
+      };
+
+      product.setAttribute('position', placePos);
+      product.setAttribute('visible', true);
+    });
+
+    // 切換貼圖
+    function changeTexture(texturePath) {
+      if (!product.getObject3D('mesh')) {
+        product.addEventListener('model-loaded', () => applyTexture(texturePath));
+      } else {
+        applyTexture(texturePath);
+      }
+    }
+
+    function applyTexture(texturePath) {
+      const mesh = product.getObject3D('mesh');
+      if (!mesh) return;
+
+      mesh.traverse((node) => {
+        if (node.isMesh) {
+          const texture = new THREE.TextureLoader().load(texturePath);
+          node.material.map = texture;
+          node.material.needsUpdate = true;
+        }
+      });
+    }
+
+    // 手勢操作（旋轉 + 縮放）
+    AFRAME.registerComponent('gesture-handler', {
+      init: function () {
+        this.lastScale = null;
+
+        this.el.sceneEl.addEventListener('onefingerstart', e => {
+          this.lastRotation = Object.assign({}, this.el.object3D.rotation);
+        });
+
+        this.el.sceneEl.addEventListener('onefingermove', e => {
+          this.el.object3D.rotation.y = this.lastRotation.y - e.detail.positionChange.x * 0.01;
+          this.el.object3D.rotation.x = this.lastRotation.x - e.detail.positionChange.y * 0.01;
+        });
+
+        this.el.sceneEl.addEventListener('twofingermove', e => {
+          if (!this.lastScale) this.lastScale = this.el.getAttribute('scale');
+          const newScale = this.lastScale.x * e.detail.spreadChange;
+          this.el.setAttribute('scale', { x: newScale, y: newScale, z: newScale });
+        });
+
+        this.el.sceneEl.addEventListener('twofingerend', e => {
+          this.lastScale = null;
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>
