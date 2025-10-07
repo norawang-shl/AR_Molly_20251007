@@ -77,7 +77,7 @@
     <button class="texture-btn" data-texture="leather" style="background: linear-gradient(135deg, #8b4513 0%, #5d2e0f 100%)"></button>
   </div>
 
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" gesture-detector>
     <!-- 資源預載 -->
     <a-assets>
       <img id="wood-texture" src="https://cdn.jsdelivr.net/gh/aframevr/sample-assets/assets/images/wood.jpg" crossorigin="anonymous">
@@ -85,14 +85,15 @@
     </a-assets>
 
     <!-- 產品模型 - 一個展示用的箱子 -->
-    <a-marker preset="hiro">
+    <a-marker preset="hiro" gesture-handler>
       <a-box 
         id="product" 
         position="0 0.5 0" 
         rotation="0 45 0"
         scale="0.8 0.8 0.8"
         material="src: #wood-texture; roughness: 0.5"
-        animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear">
+        animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear"
+        class="clickable">
       </a-box>
       
       <!-- 底座 -->
@@ -104,7 +105,7 @@
       </a-cylinder>
     </a-marker>
 
-    <a-entity camera></a-entity>
+    <a-entity camera look-controls="enabled: false" wasd-controls="enabled: false"></a-entity>
   </a-scene>
 
   <script>
